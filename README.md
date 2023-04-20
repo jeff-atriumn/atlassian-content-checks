@@ -18,7 +18,7 @@ confluence_username = email@example.com
 confluence_api_token = token_string
 confluence_url = https://test.atlassian.net/wiki
 ```
-- Pass the relevant space name into the script on the command line
+- Pass the relevant space name(s) into the script on the command line, in a comma-separated list.
 
 ```console
 foo@bar:~$ pip install -r requirements.txt
