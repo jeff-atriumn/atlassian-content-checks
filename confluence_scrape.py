@@ -17,13 +17,29 @@ def load_config(config_file):
 def create_confluence_client(config):
     username = config.get('config', 'confluence_username')
     api_token = config.get('config', 'confluence_api_token')
+    confluence_url = config.get('config', 'confluence_url')
 
     confluence = Confluence(
-        url='https://pinger.atlassian.net/wiki',
+        url=confluence_url,
         username=username,
         password=api_token)
 
     return confluence
+
+def get_content_macro_counts(body_text):
+    pattern1 = r'unknown-macro\?name=(\w+)'
+    pattern2 = r'wysiwyg-unknown-macro'
+    matches1 = re.findall(pattern1, body_text)
+    matches2 = re.findall(pattern2, body_text)
+
+    counts = defaultdict(int)
+    for match in matches1:
+        key = f'unknown-macro?name={match}'
+        counts[key] += 1
+
+    counts['wysiwyg-unknown-macro'] = len(matches2)
+
+    return counts
 
 def get_all_pages_from_spaces(confluence, spaces, limit=100):
     all_pages = []
@@ -44,18 +60,26 @@ def get_all_pages_from_spaces(confluence, spaces, limit=100):
 
     return all_pages
 
-def process_pages(confluence, pages, space):
+def process_pages(confluence, pages, space, config):
     page_info_list = []
 
     for page in pages:
         content = confluence.get_page_by_id(page['id'], expand='history,version,body.view', status=None, version=None)
         title = content['title']
 
-        url = 'https://pinger.atlassian.net/wiki/spaces/{}/pages/{}'.format(space, page['id'])
+        url = '{}/spaces/{}/pages/{}'.format(config.get('config', 'confluence_url'), space, page['id'])
 
-        # ... rest of the content processing ...
-        
-        counts = defaultdict(int)
+        created_date = content['history']['createdDate']
+        modified_date = content['version']['when']
+
+        created_date_obj = datetime.fromisoformat(created_date.replace("Z", ""))
+        modified_date_obj = datetime.fromisoformat(modified_date.replace("Z", ""))
+
+        created_date_formatted = created_date_obj.strftime("%Y-%m-%d")
+        modified_date_formatted = modified_date_obj.strftime("%Y-%m-%d")
+
+        body_text = content['body']['view']['value']
+        counts = get_content_macro_counts(body_text)
 
         if any(val > 0 for val in counts.values()):
             page_info = {
@@ -98,7 +122,7 @@ def main():
             has_more_pages = len(all_pages_in_space) == limit
 
             pages = [page for page in all_pages_in_space if page['type'] == 'page']
-            page_info_list.extend(process_pages(confluence, pages, space))
+            page_info_list.extend(process_pages(confluence, pages, space, config))
 
             start += limit
 

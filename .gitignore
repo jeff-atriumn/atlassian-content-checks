@@ -1,5 +1,8 @@
 config.ini
 
+# hide csv output files
+*-output.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
