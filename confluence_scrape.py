@@ -94,6 +94,16 @@ def process_pages(confluence, pages, space, config, output_file, total_pages):
     return processed_pages
 
 def write_csv(space, page_info_list, output_file, mode='a'):
+    # Read the existing data from the CSV file
+    existing_data = []
+    try:
+        with open(output_file, 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                existing_data.append(row)
+    except FileNotFoundError:
+        pass
+
     with open(output_file, mode, newline='', encoding='utf-8') as csvfile:
         fieldnames = ['title', 'url', 'created_date', 'modified_date', 'counts']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -106,7 +116,10 @@ def write_csv(space, page_info_list, output_file, mode='a'):
             # Create a new dictionary to avoid modifying the original page_info
             modified_page_info = page_info.copy()
             modified_page_info['counts'] = counts_string
-            writer.writerow(modified_page_info)
+
+            # Check if the page_info is already in the CSV file
+            if modified_page_info not in existing_data:
+                writer.writerow(modified_page_info)
 
 def main():
     config = load_config('config.ini')

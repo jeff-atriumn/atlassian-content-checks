@@ -22,7 +22,7 @@ confluence_url = https://test.atlassian.net/wiki
 
 ```console
 foo@bar:~$ pip install -r requirements.txt
-foo@bar:~$ python confluence_scrape.py ENG,MKT
+foo@bar:~$ ./confluence_scrape.py ENG,MKT
 ```
 
 This will dump out a csv as `{space}-output.csv`.
